@@ -25,10 +25,11 @@ class WeiboAccount(object):
     def __init__(self, uid, token=None):
         self.uid = uid
         self.access_token = token
-        self.user_info = { 'access_token': self.access_token, 'uid': self.uid }
+        self.user_info = { 'access_token': self.access_token }
 
     def call_api(self, api, query):
-        resp = requests.get(conf.API_BASE + api, params = query + self.user_info)
+        query['access_token'] = self.access_token
+        resp = requests.get(api, params=query)
         return resp.json()
 
     def get_oauth_uri(self):

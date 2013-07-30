@@ -35,6 +35,7 @@ API_BASE = 'https://api.weibo.com/2'
 API_FOLLOWER  = API_BASE + '/friendships/followers.json'
 API_FOLLOWING = API_BASE + '/friendships/friends.json'
 API_MYFEED    = API_BASE + '/statuses/user_timeline.json'
+API_TIMELINE  = API_BASE + '/statuses/home_timeline.json'
 
 OAUTH_AUTHORIZE = 'https://api.weibo.com/oauth2/authorize'
 OAUTH_GET_TOKEN = 'https://api.weibo.com/oauth2/access_token'

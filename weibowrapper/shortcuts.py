@@ -71,6 +71,6 @@ def pull_timeline(acocunt):
             if not os.path.exists(path):
                 os.mkdir(path)
             with open(path+'/'+str(tweet['id']), 'w') as f:
-                f.write(json.dump(tweet))
+                f.write(json.dumps(tweet))
         if result['next_cursor'] == 0:
             in_progress = False
