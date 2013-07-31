@@ -57,7 +57,12 @@ def get_all_myfeed(account, source='web', target='return'):
         with open(conf.PATH_MYFEED_JSON, 'a') as f:
             f.write(json.dumps(myfeed_list))
 
+#=====================================================================================
+
 def pull_timeline(acocunt):
+    '''
+    Pull your entire timeline (all feeds you received) to local, in DATA_PATH/feeddb/uid/id.json
+    '''
     in_progress = True
     first_round = True
     while (in_progress):
@@ -70,7 +75,7 @@ def pull_timeline(acocunt):
             path = conf.PATH_FEED_DB + '/' + str(tweet['user']['id'])
             if not os.path.exists(path):
                 os.mkdir(path)
-            with open(path+'/'+str(tweet['id']), 'w') as f:
+            with open(path+'/'+str(tweet['id'])+'.json', 'w') as f:
                 f.write(json.dumps(tweet))
         if result['next_cursor'] == 0:
             in_progress = False

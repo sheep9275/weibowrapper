@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os
+import os, urllib
 
 #----------------------------------------------------------------------------------
 # Weibo Authentication Information
@@ -32,10 +32,14 @@ PATH_FEED_DB        = PATH_DATA + '/feeddb'
 
 API_BASE = 'https://api.weibo.com/2'
 
-API_FOLLOWER  = API_BASE + '/friendships/followers.json'
-API_FOLLOWING = API_BASE + '/friendships/friends.json'
-API_MYFEED    = API_BASE + '/statuses/user_timeline.json'
-API_TIMELINE  = API_BASE + '/statuses/home_timeline.json'
+API_FOLLOWER  = '/friendships/followers.json'
+API_FOLLOWING = '/friendships/friends.json'
+API_MYFEED    = '/statuses/user_timeline.json'
+API_TIMELINE  = '/statuses/home_timeline.json'
 
 OAUTH_AUTHORIZE = 'https://api.weibo.com/oauth2/authorize'
 OAUTH_GET_TOKEN = 'https://api.weibo.com/oauth2/access_token'
+
+OAUTH_URL = OAUTH_AUTHORIZE + '?' + urllib.urlencode({ 'client_id': conf.client_key, 
+                                                       'response_type': 'code', 
+                                                       'redirect_uri': conf.redirect_uri})
