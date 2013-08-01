@@ -21,11 +21,14 @@ uid_example   = '2479339722'
 
 PATH_DATA   = os.environ['HOME'] + '/Persistent/Weibo'
 
+PATH_FEED_DB = PATH_DATA + '/feeddb'
+PATH_INDEX   = PATH_DATA + '/index'
+PATH_IMAGE   = PATH_DATA + '/image'
+PATH_AVATAR  = PATH_DATA + '/avatar'
+
 PATH_FOLLOWING_JSON = PATH_DATA + '/following.json'
 PATH_FOLLOWER_JSON  = PATH_DATA + '/follower.json'
 PATH_MYFEED_JSON    = PATH_DATA + '/myfeed.json'
-PATH_FEED_DB        = PATH_DATA + '/feeddb'
-PATH_INDEX          = PATH_DATA + '/index'
 
 #----------------------------------------------------------------------------------
 # API URI Constants

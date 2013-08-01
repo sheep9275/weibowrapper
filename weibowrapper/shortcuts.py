@@ -65,6 +65,61 @@ def get_all_myfeed(account, source='web', target='return'):
             f.write(json.dumps(myfeed_list))
 
 #=====================================================================================
+# Local Image
+#=====================================================================================
+
+def download_all_follower (account):
+    query = {'count': 200}
+    result = account.call_api(conf.API_FOLLOWER, query)
+    follower_list = result['users']
+    while (result['next_cursor'] != 0):
+        query['cursor'] = result['next_cursor']
+        result = account.call_api(conf.API_FOLLOWER, query)
+        follower_list += result['users']
+    for profile in follower_list:
+        os.system('wget -O ' + conf.PATH_AVATAR + '/' + profile['idstr'] + '.jpg ' + profile['avatar_large'])
+    with open(conf.PATH_FOLLOWER_JSON, 'w') as f:
+        f.write(json.dumps(follower_list))
+            
+def download_all_following (account):
+    query = {'count': 200}
+    result = account.call_api(conf.API_FOLLOWING, query)
+    following_list = result['users']
+    while (result['next_cursor'] != 0):
+        query['cursor'] = result['next_cursor']
+        result = account.call_api(conf.API_FOLLOWING, query)
+        following_list += result['users']
+    for profile in following_list:
+        os.system('wget -O ' + conf.PATH_AVATAR + '/' + profile['idstr'] + '.jpg ' + profile['avatar_large'])
+    with open(conf.PATH_FOLLOWING_JSON, 'w') as f:
+        f.write(json.dumps(following_list))
+
+def download_all_myfeed(account):
+    result = account.call_api(conf.API_MYFEED, {'count': 100})
+    myfeed_list = result['statuses']
+    with open(conf.PATH_MYFEED_JSON, 'w') as f:
+        f.write(json.dumps(myfeed_list))
+
+def download_all_timeline(acocunt):
+    in_progress = True
+    first_round = True
+    while (in_progress):
+        if first_round:
+            result = acocunt.call_api(conf.API_TIMELINE, {'count':100})
+            first_round = False
+        else:
+            result = acocunt.call_api(conf.API_TIMELINE, {'count': 100, 'max_id': result['next_cursor']})
+        for tweet in result['statuses']:
+            path = conf.PATH_FEED_DB + '/' + str(tweet['user']['id'])
+            if not os.path.exists(path):
+                os.mkdir(path)
+            with open(path+'/'+str(tweet['id']), 'w') as f:
+                f.write(json.dumps(tweet))
+        if result['next_cursor'] == 0:
+            in_progress = False
+
+
+#=====================================================================================
 # Local Database
 #=====================================================================================
 
@@ -119,3 +174,4 @@ def db_search(query_str):
         print(results)
         for entry in results:
             print(entry)
+

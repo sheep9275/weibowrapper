@@ -27,6 +27,7 @@ class WeiboAccount(object):
 
     def call_api(self, api, query):
         query['access_token'] = self.access_token
+        query['uid'] = self.uid
         resp = requests.get(conf.API_BASE+api, params=query)
         return resp.json()
 
