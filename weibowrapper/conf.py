@@ -40,6 +40,6 @@ API_TIMELINE  = '/statuses/home_timeline.json'
 OAUTH_AUTHORIZE = 'https://api.weibo.com/oauth2/authorize'
 OAUTH_GET_TOKEN = 'https://api.weibo.com/oauth2/access_token'
 
-OAUTH_URL = OAUTH_AUTHORIZE + '?' + urllib.urlencode({ 'client_id': conf.client_key, 
-                                                       'response_type': 'code', 
-                                                       'redirect_uri': conf.redirect_uri})
+#OAUTH_URL = OAUTH_AUTHORIZE + '?' + urllib.urlencode( {'client_id': client_key, 
+#                                                       'response_type': 'code', 
+#                                                       'redirect_uri': redirect_uri} )

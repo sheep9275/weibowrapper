@@ -6,6 +6,8 @@ import json, os
 from weibowrapper import sdk, conf
 
 #=====================================================================================
+# Online API wrapper
+#=====================================================================================
 
 def get_all_follower (account, source='web', target='return'):
     if source == 'json':
@@ -58,10 +60,12 @@ def get_all_myfeed(account, source='web', target='return'):
             f.write(json.dumps(myfeed_list))
 
 #=====================================================================================
+# Local Database
+#=====================================================================================
 
-def pull_timeline(acocunt):
+def db_pull_timeline(acocunt):
     '''
-    Pull your entire timeline (all feeds you received) to local, in DATA_PATH/feeddb/uid/id.json
+    Pull your entire timeline (all feeds you received) to local, in DATA_PATH/feeddb/uid/id
     '''
     in_progress = True
     first_round = True
@@ -75,7 +79,8 @@ def pull_timeline(acocunt):
             path = conf.PATH_FEED_DB + '/' + str(tweet['user']['id'])
             if not os.path.exists(path):
                 os.mkdir(path)
-            with open(path+'/'+str(tweet['id'])+'.json', 'w') as f:
+            with open(path+'/'+str(tweet['id']), 'w') as f:
                 f.write(json.dumps(tweet))
         if result['next_cursor'] == 0:
             in_progress = False
+
