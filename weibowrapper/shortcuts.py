@@ -3,6 +3,11 @@
 #=====================================================================================
 
 import json, os
+from whoosh.index import create_in
+from whoosh.fields import *
+from whoosh.index import open_dir
+from whoosh.qparser import QueryParser
+    
 from weibowrapper import sdk, conf
 
 #=====================================================================================
@@ -84,3 +89,33 @@ def db_pull_timeline(acocunt):
         if result['next_cursor'] == 0:
             in_progress = False
 
+def db_index():
+
+    schema = Schema( path     = TEXT(stored=True),
+                     tweet_id = ID(stored=True),
+                     content  = TEXT )
+
+    if not os.path.exists(conf.PATH_INDEX):
+        os.mkdir(conf.PATH_INDEX)
+
+    my_index = create_in(conf.PATH_INDEX, schema)
+    my_writer = my_index.writer()
+
+    for uid in os.listdir(conf.PATH_FEED_DB):
+        for tweet in os.listdir(conf.PATH_FEED_DB+'/'+uid):
+            rel_path = '/' + uid + '/' + tweet
+            with open(conf.PATH_FEED_DB+rel_path, 'r') as f:
+                doc = json.loads(f.read())
+            my_writer.add_document( path     = rel_path, 
+                                    tweet_id = str(doc['id']), 
+                                    content  = doc['text'])
+    my_writer.commit()
+
+def db_search(query_str):    
+    my_index = open_dir(conf.PATH_INDEX)
+    with my_index.searcher() as searcher:
+        query = QueryParser('content', my_index.schema).parse(query_str)
+        results = searcher.search(query)
+        print(results)
+        for entry in results:
+            print(entry)
