@@ -171,7 +171,8 @@ def db_search(query_str):
     with my_index.searcher() as searcher:
         query = QueryParser('content', my_index.schema).parse(query_str)
         results = searcher.search(query)
-        print(results)
-        for entry in results:
-            print(entry)
-
+        feeds = []
+        for path in [entry['path'] for entry in results]:
+            with open(conf.PATH_FEED_DB+path,'r') as f:
+                feeds.append(json.loads(f.read()))
+        return feeds
