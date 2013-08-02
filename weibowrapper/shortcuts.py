@@ -6,9 +6,16 @@ import json, os
 from whoosh.index import create_in
 from whoosh.fields import *
 from whoosh.index import open_dir
-from whoosh.qparser import QueryParser
+from whoosh.qparser import QueryParser, MultifieldParser
     
 from weibowrapper import sdk, conf
+from weibowrapper.sdk import WeiboAccount
+
+#=====================================================================================
+# For Test
+#=====================================================================================
+
+myself = WeiboAccount(conf.uid_example, token=conf.token_example)
 
 #=====================================================================================
 # Online API wrapper
@@ -64,6 +71,36 @@ def get_all_myfeed(account, source='web', target='return'):
         with open(conf.PATH_MYFEED_JSON, 'a') as f:
             f.write(json.dumps(myfeed_list))
 
+def get_all_archive(account, source='web'):
+    if source == 'json':
+        with open(conf.PATH_ARCHIVE_JSON, 'r') as f:
+            feed_list = json.loads(f.read())
+    else:
+        query = {'count':50, 'page':1}
+        first_round = True
+        total = 1
+        feed_list = []
+        while (total > len(feed_list)):
+            if first_round:
+                result = account.call_api(conf.API_ARCHIVE, query)
+                total = result['total_number']
+                first_round = False
+            else:
+                result = account.call_api(conf.API_ARCHIVE, query)
+                for entry in result['favorites']:
+                    feed_list.append(entry['status'])
+            query['page'] = query['page'] + 1
+    return feed_list
+
+def get_user_feed(account, uid):
+    result = []
+    base_path = conf.PATH_FEED_DB + '/' + uid + '/'
+    if os.path.exists(base_path):
+        for feed in os.listdir(base_path):
+            with open(base_path+feed) as f:
+                result.append(json.loads(f.read()))
+    return result
+
 #=====================================================================================
 # Local Image
 #=====================================================================================
@@ -100,6 +137,24 @@ def download_all_myfeed(account):
     with open(conf.PATH_MYFEED_JSON, 'w') as f:
         f.write(json.dumps(myfeed_list))
 
+def download_all_archive(account):
+    query = {'count':50, 'page':1}
+    first_round = True
+    total = 1
+    feed_list = []
+    while (total > len(feed_list)):
+        if first_round:
+            result = account.call_api(conf.API_ARCHIVE, query)
+            total = result['total_number']
+            first_round = False
+        else:
+            result = account.call_api(conf.API_ARCHIVE, query)
+        for entry in result['favorites']:
+            feed_list.append(entry['status'])
+        query['page'] = query['page'] + 1
+    with open(conf.PATH_ARCHIVE_JSON, 'w') as f:
+        f.write(json.dumps(feed_list))
+
 def download_all_timeline(acocunt):
     in_progress = True
     first_round = True
@@ -120,13 +175,10 @@ def download_all_timeline(acocunt):
 
 
 #=====================================================================================
-# Local Database
+# Search Functionality
 #=====================================================================================
 
 def db_pull_timeline(acocunt):
-    '''
-    Pull your entire timeline (all feeds you received) to local, in DATA_PATH/feeddb/uid/id
-    '''
     in_progress = True
     first_round = True
     while (in_progress):
@@ -144,15 +196,14 @@ def db_pull_timeline(acocunt):
         if result['next_cursor'] == 0:
             in_progress = False
 
-def db_index():
-
+def index_db():
     schema = Schema( path     = TEXT(stored=True),
                      tweet_id = ID(stored=True),
-                     content  = TEXT )
+                     content  = TEXT,
+                     retweet  = TEXT )
 
     if not os.path.exists(conf.PATH_INDEX):
         os.mkdir(conf.PATH_INDEX)
-
     my_index = create_in(conf.PATH_INDEX, schema)
     my_writer = my_index.writer()
 
@@ -161,18 +212,97 @@ def db_index():
             rel_path = '/' + uid + '/' + tweet
             with open(conf.PATH_FEED_DB+rel_path, 'r') as f:
                 doc = json.loads(f.read())
-            my_writer.add_document( path     = rel_path, 
-                                    tweet_id = str(doc['id']), 
-                                    content  = doc['text'])
+            if 'retweeted_status' in doc:
+                my_writer.add_document( path     = rel_path, 
+                                        tweet_id = str(doc['id']), 
+                                        content  = doc['text'],
+                                        retweet  = doc['retweeted_status']['text'])
+            else:
+                my_writer.add_document( path     = rel_path, 
+                                        tweet_id = str(doc['id']), 
+                                        content  = doc['text'],
+                                        retweet  = '')                
     my_writer.commit()
 
-def db_search(query_str):    
+def search_db(query_str):    
     my_index = open_dir(conf.PATH_INDEX)
     with my_index.searcher() as searcher:
-        query = QueryParser('content', my_index.schema).parse(query_str)
+        mparser = MultifieldParser(['content','retweet'], schema=my_index.schema)
+        query = mparser.parse(query_str)
         results = searcher.search(query)
         feeds = []
         for path in [entry['path'] for entry in results]:
             with open(conf.PATH_FEED_DB+path,'r') as f:
                 feeds.append(json.loads(f.read()))
         return feeds
+
+def index_myfeed():
+    schema = Schema( feed_id = ID(stored=True),
+                     content = TEXT, 
+                     retweet = TEXT)
+
+    if not os.path.exists(conf.PATH_INDEX_MYFEED):
+        os.mkdir(conf.PATH_INDEX_MYFEED)
+
+    my_index = create_in(conf.PATH_INDEX_MYFEED, schema)
+    my_writer = my_index.writer()
+    with open(conf.PATH_MYFEED_JSON, 'r') as f:
+        feeds = json.loads(f.read())
+        for feed in feeds:
+            if 'retweeted_status' in feed:
+                my_writer.add_document( feed_id = str(feed['id']), 
+                                        content = feed['text'],
+                                        retweet = feed['retweeted_status']['text'])
+            else:
+                my_writer.add_document( feed_id = str(feed['id']), 
+                                        content = feed['text'],
+                                        retweet = '')
+    my_writer.commit()
+
+def search_myfeed(query_str):
+    my_index = open_dir(conf.PATH_INDEX_MYFEED)
+    with my_index.searcher() as searcher:
+        mparser = MultifieldParser(['content','retweet'], schema=my_index.schema)
+        query = mparser.parse(query_str)
+        results = searcher.search(query)
+        result_list = [entry['feed_id'] for entry in results]
+        with open(conf.PATH_MYFEED_JSON,'r') as f:
+            feeds = json.loads(f.read())
+            return [feed for feed in feeds if str(feed['id']) in result_list]
+
+def index_archive():
+    schema = Schema( feed_id = ID(stored=True),
+                     content = TEXT, 
+                     retweet = TEXT)
+
+    if not os.path.exists(conf.PATH_INDEX_ARCHIVE):
+        os.mkdir(conf.PATH_INDEX_ARCHIVE)
+
+    my_index = create_in(conf.PATH_INDEX_MYFEED, schema)
+    my_writer = my_index.writer()
+    with open(conf.PATH_ARCHIVE_JSON, 'r') as f:
+        feeds = json.loads(f.read())
+        for feed in feeds:
+            if 'retweeted_status' in feed:
+                my_writer.add_document( feed_id = str(feed['id']), 
+                                        content = feed['text'],
+                                        retweet = feed['retweeted_status']['text'])
+            else:
+                my_writer.add_document( feed_id = str(feed['id']), 
+                                        content = feed['text'],
+                                        retweet = '')
+    my_writer.commit()
+
+def search_my_archive(query_str):
+    my_index = open_dir(conf.PATH_INDEX_ARCHIVE)
+    with my_index.searcher() as searcher:
+        mparser = MultifieldParser(['content','retweet'], schema=my_index.schema)
+        query = mparser.parse(query_str)
+        results = searcher.search(query)
+        result_list = [entry['feed_id'] for entry in results]
+        with open(conf.PATH_ARCHIVE_JSON,'r') as f:
+            feeds = json.loads(f.read())
+            return [feed for feed in feeds if str(feed['id']) in result_list]
+        
+def search_all(query_str):
+    return search_db(query_str) + search_myfeed(query_str) + search_my_archive(query_str)

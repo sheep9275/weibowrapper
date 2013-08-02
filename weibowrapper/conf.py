@@ -22,13 +22,17 @@ uid_example   = '2479339722'
 PATH_DATA   = os.environ['HOME'] + '/Persistent/Weibo'
 
 PATH_FEED_DB = PATH_DATA + '/feeddb'
-PATH_INDEX   = PATH_DATA + '/index'
 PATH_IMAGE   = PATH_DATA + '/image'
 PATH_AVATAR  = PATH_DATA + '/avatar'
+
+PATH_INDEX           = PATH_DATA + '/index'
+PATH_INDEX_MYFEED    = PATH_DATA + '/index-myfeed'
+PATH_INDEX_ARCHIVE   = PATH_DATA + '/index-archive'
 
 PATH_FOLLOWING_JSON = PATH_DATA + '/following.json'
 PATH_FOLLOWER_JSON  = PATH_DATA + '/follower.json'
 PATH_MYFEED_JSON    = PATH_DATA + '/myfeed.json'
+PATH_ARCHIVE_JSON   = PATH_DATA + '/archive.json'
 
 #----------------------------------------------------------------------------------
 # API URI Constants
@@ -40,6 +44,7 @@ API_FOLLOWER  = '/friendships/followers.json'
 API_FOLLOWING = '/friendships/friends.json'
 API_MYFEED    = '/statuses/user_timeline.json'
 API_TIMELINE  = '/statuses/home_timeline.json'
+API_ARCHIVE   = '/favorites.json'
 
 OAUTH_AUTHORIZE = 'https://api.weibo.com/oauth2/authorize'
 OAUTH_GET_TOKEN = 'https://api.weibo.com/oauth2/access_token'
